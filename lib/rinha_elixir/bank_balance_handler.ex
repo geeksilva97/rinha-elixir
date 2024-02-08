@@ -10,7 +10,7 @@ defmodule RinhaElixir.BankBalanceHandler do
   end
 
   def handle_event(event, state) do
-    IO.puts("Receive event #{inspect(event)} :: state #{inspect(state)}")
+    IO.puts("Received event #{inspect(event)} :: state #{inspect(state)}")
 
     {:ok, state}
   end

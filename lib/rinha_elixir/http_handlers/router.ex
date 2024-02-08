@@ -28,7 +28,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
     {:ok, raw_body, _} = read_body(conn)
     payload = Jason.decode!(raw_body)
 
-    Bus.send_event({:log_event, payload})
+    Bus.send_event({:log_event, Map.put(payload, "client_id", client_id)})
     # TODO: read saldo summary
 
     conn
