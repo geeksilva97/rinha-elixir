@@ -4,12 +4,17 @@ defmodule RinhaElixir.Application do
   @moduledoc false
 
   use Application
+  alias RinhaElixir.BankBalanceHandler
   require Logger
 
   @impl true
   def start(_type, _args) do
     children = [
-      {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: 8080}
+      {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: 8080},
+      %{
+        id: RinhaElixir.Bus,
+        start: {RinhaElixir.Bus, :start_link, [[{BankBalanceHandler, []}]]}
+      }
     ]
 
     opts = [strategy: :one_for_one, name: RinhaElixir.Supervisor]
