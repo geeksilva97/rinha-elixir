@@ -43,6 +43,8 @@ defmodule RinhaElixir.Store do
   end
 
   def handle_call(_event, _from, state) do
+    Logger.info("received an unexpected event")
+
     {:reply, :wtf, state}
   end
 end

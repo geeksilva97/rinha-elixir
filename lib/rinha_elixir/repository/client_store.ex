@@ -3,7 +3,7 @@ defmodule RinhaElixir.ClientStore do
 
   @spec start_link(list({id :: integer(), limite :: integer()})) :: {:ok, pid()}
   def start_link(items) do
-    {_, state_map} = items |> Enum.map_reduce(%{}, fn {id, limite}, acc -> { nil, Map.put(acc, id, %{limite: limite, saldo: 0})} end)
+    {_, state_map} = items |> Enum.map_reduce(%{}, fn {id, limite}, acc -> { nil, Map.put(acc, id, %{limite: limite, saldo: 0, latest_transactions: []})} end)
 
     GenServer.start_link(__MODULE__, state_map, name: __MODULE__)
   end
@@ -24,11 +24,29 @@ defmodule RinhaElixir.ClientStore do
     GenServer.cast(__MODULE__, { :subtract_saldo, id, valor })
   end
 
+  def append_transaction(id, transaction) do
+    GenServer.cast(__MODULE__, { :append_transaction, id, transaction })
+  end
+
   def init(state) do
     Logger.info("#{inspect(state)}")
 
     {:ok, state}
   end
+
+  def handle_cast({:append_transaction, id, transaction}, state) do
+    new_client_state = state[id] |> Map.update(:latest_transactions, 0, fn curr ->
+      new_list = [transaction | curr]
+
+      case length(new_list) >= 10 do
+        true -> new_list |> List.delete_at(-1)
+        _ -> new_list
+      end
+    end)
+
+    {:noreply, Map.put(state, id, new_client_state)}
+  end
+
 
   def handle_cast({:subtract_saldo, id, valor}, state) do
     new_client_state = state[id] |> Map.update(:saldo, 0, fn curr -> curr - valor end)
