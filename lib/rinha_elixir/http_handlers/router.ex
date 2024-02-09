@@ -43,14 +43,23 @@ defmodule RinhaElixir.HttpHandlers.Router do
 
         conn
         |> put_resp_header("Content-Type", "application/json")
-        |> send_resp(200, Jason.encode!(%{limite: limite, saldo: saldo_atual + payload["valor"] }))
+        |> send_resp(200, Jason.encode!(%{limite: limite, saldo: saldo_atual + valor }))
 
       "d" ->
         %{ limite: limite, saldo: saldo_atual } = ClientStore.get_data(client_id)
 
-        conn
-        |> put_resp_header("Content-Type", "application/json")
-        |> send_resp(422, Jason.encode!(%{message: "what the fuck?"}))
+        if (saldo_atual - valor) < limite do
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(422, [])
+        else
+          Bus.send_event({:log_event, Map.put(payload, "client_id", client_id)})
+          ClientStore.subtract_saldo(client_id, valor)
+
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(200, Jason.encode!(%{limite: limite, saldo: saldo_atual - valor }))
+        end
 
       _ ->
         conn

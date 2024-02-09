@@ -20,10 +20,20 @@ defmodule RinhaElixir.ClientStore do
     GenServer.cast(__MODULE__, { :add_saldo, id, valor })
   end
 
+  def subtract_saldo(id, valor) do
+    GenServer.cast(__MODULE__, { :subtract_saldo, id, valor })
+  end
+
   def init(state) do
     Logger.info("#{inspect(state)}")
 
     {:ok, state}
+  end
+
+  def handle_cast({:subtract_saldo, id, valor}, state) do
+    new_client_state = state[id] |> Map.update(:saldo, 0, fn curr -> curr - valor end)
+
+    {:noreply, Map.put(state, id, new_client_state)}
   end
 
   def handle_cast({:add_saldo, id, valor}, state) do
