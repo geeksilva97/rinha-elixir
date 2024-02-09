@@ -1,6 +1,8 @@
 defmodule RinhaElixir.HttpHandlers.Router do
   use Plug.Router
   alias RinhaElixir.Bus
+  alias RinhaElixir.ClientStore
+  require Logger
 
   # https://hexdocs.pm/plug/1.3.6/Plug.Conn.html#read_body/2
 
@@ -27,13 +29,35 @@ defmodule RinhaElixir.HttpHandlers.Router do
   post "/clientes/:client_id/transacoes" do
     {:ok, raw_body, _} = read_body(conn)
     payload = Jason.decode!(raw_body)
+    client_id = client_id |> :erlang.binary_to_integer()
+    tipo = payload[ "tipo"]
+    valor = payload["valor"]
 
-    Bus.send_event({:log_event, Map.put(payload, "client_id", client_id)})
-    # TODO: read saldo summary
+    case tipo do
+      "c" ->
+        Bus.send_event({:log_event, Map.put(payload, "client_id", client_id)})
 
-    conn
-    |> put_resp_header("Content-Type", "application/json")
-    |> send_resp(200, Jason.encode!(%{limite: 0, saldo: 0}))
+        %{ limite: limite, saldo: saldo_atual } = ClientStore.get_data(client_id)
+
+        ClientStore.add_saldo(client_id, valor)
+
+        conn
+        |> put_resp_header("Content-Type", "application/json")
+        |> send_resp(200, Jason.encode!(%{limite: limite, saldo: saldo_atual + payload["valor"] }))
+
+      "d" ->
+        %{ limite: limite, saldo: saldo_atual } = ClientStore.get_data(client_id)
+
+        conn
+        |> put_resp_header("Content-Type", "application/json")
+        |> send_resp(422, Jason.encode!(%{message: "what the fuck?"}))
+
+      _ ->
+        conn
+        |> put_resp_header("Content-Type", "application/json")
+        |> send_resp(422, [])
+
+    end
   end
 
   defp check_client_id(conn, _) do
