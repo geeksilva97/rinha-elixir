@@ -11,6 +11,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
   plug(:check_client_id)
 
   get "/clientes/:client_id/extrato" do
+    :mnesia.info()
     client_id = client_id |> :erlang.binary_to_integer()
     %{ limite: limite, saldo: saldo, latest_transactions: latest_transactions } = ClientStore.get_data(client_id)
 

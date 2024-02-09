@@ -25,13 +25,47 @@ defmodule RinhaElixir.Store do
     end)
   end
 
+  defp cluster_nodes() do
+    [node() | Node.list()]
+  end
+
+  defp create_mnesia_schema(:diogenes@api01) do
+    :rpc.multicall(cluster_nodes(), :mnesia, :stop, [])
+    schema_deletion_result = Mnesia.delete_schema(cluster_nodes()) 
+    schema_creation_result = Mnesia.create_schema(cluster_nodes()) 
+
+    Logger.info("Schema deletion result #{inspect(schema_deletion_result)}")
+    Logger.info("Schema creation result #{inspect(schema_creation_result)}")
+  end
+
+  defp create_mnesia_schema(_), do: :noop
+
+  def create_mnesia_tables(:diogenes@api01) do
+    :rpc.multicall(cluster_nodes(), :mnesia, :start, [])
+    Logger.info("Creating tables... #{inspect(cluster_nodes())}")
+
+    Mnesia.info()
+
+    {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag, disc_copies: cluster_nodes()])
+
+    # aggregate {client: 1, saldo: 1000, limite: 222}
+    {:atomic, :ok} = Mnesia.create_table(BalanceAggregate, [attributes: [:client_id, :event_id, :version, :event_data], type: :set, ram_copies: cluster_nodes()])
+
+    # latest events { client: 1, latest_events: [%{...}, %{...}] }
+    {:atomic, :ok} = Mnesia.create_table(LatestEvents, [attributes: [:client_id, :latest_events], type: :set, ram_copies: cluster_nodes()])
+  end
+
+  def create_mnesia_tables(_) do
+    :ok
+  end
+
   def init(_) do
-    Mnesia.create_schema([node()])
-    Mnesia.start()
+    create_mnesia_schema(node())
+    create_mnesia_tables(node())
 
-    {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag])
+    # {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag])
 
-    Logger.info("Store started successfully")
+    # Logger.info("Store started successfully")
 
     {:ok, %{}}
   end

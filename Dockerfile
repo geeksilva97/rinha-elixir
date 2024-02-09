@@ -17,4 +17,4 @@ RUN mix compile
 
 
 # CMD ["elixir", "--sname", "diogenes", "-S", "mix", "run", "--no-halt"]
-CMD elixir --sname $NODE_NAME -S mix run --no-halt
+CMD elixir --sname $NODE_NAME --cookie supersecretcookie -S mix run --no-halt
