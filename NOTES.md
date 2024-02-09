@@ -9,5 +9,16 @@
 - endpoint de POST funciona o caso mais trivial. Vou seguir com a ideia do cluster Erlang e deixar que o mnesia se vire
     com condicoes de corrida. Vou evitar dirty_writes pelo menos pra tentar manter uma consistencia
 
+
+- concluí os endpoints
+- o estado nos genservers nao vai ter como ficar como está, vou criar uma tabela no mesnia só para projecoes, assim ela
+    fica distribuida
+- to lembrando agora que eu realmente comecei assim pra fazer funcionar e a que a ideia é se valer da distrbuicao do
+    mnesia mesmo
+- Penso em algo como
+    - tabela em disco para armazenar os logs 
+    - tabela em memoria que fica com a projecao
+        - aqui penso em uma tabela por cliente pra evitar ainda mais as condicoes de corrida
+
 https://www.erlang.org/doc/man/mnesia#write-1
 https://architecturenotes.co/redis/
