@@ -28,12 +28,18 @@ defmodule MnesiaDemo do
     # Mnesia.start()
     :rpc.multicall(cluster_nodes(), :mnesia, :start, [])
 
-    {:atomic, :ok} = Mnesia.create_table(Table, [attributes: [:id, :name], ram_copies: cluster_nodes()])
+    # Works exactly like mnesia:dirty_first/1 but returns the last object in Erlang term order for the ordered_set table type. For all other table types, mnesia:dirty_first/1 and mnesia:dirty_last/1 are synonyms.
+
+    {:atomic, :ok} = Mnesia.create_table(Table, [attributes: [:id, :name], type: :bag, ram_copies: cluster_nodes()])
   end
 
   def do_some_writes() do
     Mnesia.dirty_write({Table, 1, "Hello world"})
     Mnesia.dirty_write({Table, 2, "WTF"})
+    Mnesia.dirty_write({Table, 3, "heeeeey"})
+    Mnesia.dirty_write({Table, 4, "ola mundo"})
+    Mnesia.dirty_write({Table, 5, "blah blah"})
+    Mnesia.dirty_write({Table, 3, "bag"})
   end
 
   def do_some_reads_in_the_other_node() do
