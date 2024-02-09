@@ -1,7 +1,7 @@
 defmodule RinhaElixir.BankBalanceHandler do
   @behaviour :gen_event
 
-  alias RinhaElixir.Store
+  alias RinhaElixir.{Store, ClientStore}
 
   def init([]) do
     {:ok, []}
@@ -13,8 +13,10 @@ defmodule RinhaElixir.BankBalanceHandler do
 
   def handle_event({:log_event, event_data}, state) do
     client_id = event_data["client_id"]
+    transaction = Map.delete(event_data, "client_id")
 
     Store.store_event(client_id, Map.delete(event_data, "client_id"))
+    ClientStore.append_transaction(client_id, transaction)
 
     {:ok, state}
   end

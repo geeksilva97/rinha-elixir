@@ -11,17 +11,20 @@ defmodule RinhaElixir.HttpHandlers.Router do
   plug(:check_client_id)
 
   get "/clientes/:client_id/extrato" do
+    client_id = client_id |> :erlang.binary_to_integer()
+    %{ limite: limite, saldo: saldo, latest_transactions: latest_transactions } = ClientStore.get_data(client_id)
+
     conn
     |> put_resp_header("Content-Type", "application/json")
     |> send_resp(
       200,
       Jason.encode!(%{
         saldo: %{
-          total: 0,
-          data_extrato: "",
-          limit: 0
+          total: saldo,
+          data_extrato: DateTime.utc_now(),
+          limite: limite
         },
-        ultimas_transacoes: []
+        ultimas_transacoes: latest_transactions
       })
     )
   end

@@ -1,6 +1,8 @@
 defmodule RinhaElixir.ClientStore do
   require Logger
 
+  @amount_txns_to_keep 10
+
   @spec start_link(list({id :: integer(), limite :: integer()})) :: {:ok, pid()}
   def start_link(items) do
     {_, state_map} = items |> Enum.map_reduce(%{}, fn {id, limite}, acc -> { nil, Map.put(acc, id, %{limite: limite, saldo: 0, latest_transactions: []})} end)
@@ -38,11 +40,14 @@ defmodule RinhaElixir.ClientStore do
     new_client_state = state[id] |> Map.update(:latest_transactions, 0, fn curr ->
       new_list = [transaction | curr]
 
-      case length(new_list) >= 10 do
+
+      case length(new_list) > @amount_txns_to_keep do
         true -> new_list |> List.delete_at(-1)
         _ -> new_list
       end
     end)
+
+    Logger.info("appending transaction :: #{inspect(new_client_state)}")
 
     {:noreply, Map.put(state, id, new_client_state)}
   end
