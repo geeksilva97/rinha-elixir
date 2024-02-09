@@ -1,6 +1,10 @@
 # RinhaElixir
 
-**TODO: Add description**
+Elixix + Mnesia + muito odio no coracao
+
+## Referencias
+
+- [https://www.erlang.org/doc/man/mnesia.html](https://www.erlang.org/doc/man/mnesia.html)
 
 ## Installation
 

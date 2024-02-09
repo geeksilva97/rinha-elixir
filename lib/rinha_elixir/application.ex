@@ -12,6 +12,10 @@ defmodule RinhaElixir.Application do
     children = [
       {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: 8080},
       %{
+        id: RinhaElixir.Store,
+        start: {RinhaElixir.Store, :start_link, []}
+      },
+      %{
         id: RinhaElixir.Bus,
         start: {RinhaElixir.Bus, :start_link, [[{BankBalanceHandler, []}]]}
       }
