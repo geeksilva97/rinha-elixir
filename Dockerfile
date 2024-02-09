@@ -1,7 +1,9 @@
 FROM elixir:latest
 
 ARG NODE_NAME
-ENV NODE_ENV $NODE_ENV
+ENV NODE_NAME $NODE_NAME
+
+RUN echo $NODE_ENV
 
 WORKDIR /app
 
@@ -14,5 +16,5 @@ RUN mix local.hex --force && \
 RUN mix compile
 
 
-# CMD ["mix", "run", "--no-halt"]
-CMD ["mix", "run", "--no-halt"]
+# CMD ["elixir", "--sname", "diogenes", "-S", "mix", "run", "--no-halt"]
+CMD elixir --sname $NODE_NAME -S mix run --no-halt

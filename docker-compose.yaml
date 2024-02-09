@@ -2,13 +2,29 @@ version: "3"
 
 services:
   api:
-    build: .
+    build:
+      context: .
+      args:
+        - NODE_NAME=diogenes
     container_name: api
+    hostname: api01
     ports:
       - "8080:8080"
     volumes:
       - ./:/app
     environment:
       - NODE_NAME=diogenes
-    # depends_on:
-    #   - db
+
+  api2:
+    build:
+      context: .
+      args:
+        - NODE_NAME=alexander
+    container_name: api2
+    hostname: api02
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./:/app
+    environment:
+      - NODE_NAME=alexander

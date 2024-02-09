@@ -34,7 +34,7 @@ defmodule RinhaElixir.Application do
 
     opts = [strategy: :one_for_one, name: RinhaElixir.Supervisor]
 
-    Logger.info("Starting the application")
+    Logger.info("Starting the application :: I am the node #{inspect(node())}")
 
     Supervisor.start_link(children, opts)
   end
