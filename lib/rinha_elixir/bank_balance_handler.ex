@@ -11,8 +11,10 @@ defmodule RinhaElixir.BankBalanceHandler do
     RinhaElixir.Bus.delete_handler(__MODULE__, [])
   end
 
-  def handle_event({:log_event, %{"client_id" => client_id}}, state) do
-    Store.store_event(client_id, :hello_world)
+  def handle_event({:log_event, event_data}, state) do
+    client_id = event_data["client_id"]
+
+    Store.store_event(client_id, Map.delete(event_data, "client_id"))
 
     {:ok, state}
   end
