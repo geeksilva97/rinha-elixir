@@ -6,4 +6,8 @@
     - uma outra ideia que tive foi de ter uma tabela de eventos pra cada client, assim as escritas/leituras ficam
         distrbuídas, pode ser uma boa, mas tenho que testar
 
+- endpoint de POST funciona o caso mais trivial. Vou seguir com a ideia do cluster Erlang e deixar que o mnesia se vire
+    com condicoes de corrida. Vou evitar dirty_writes pelo menos pra tentar manter uma consistencia
 
+https://www.erlang.org/doc/man/mnesia#write-1
+https://architecturenotes.co/redis/
