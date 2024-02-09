@@ -9,8 +9,9 @@ defmodule RinhaElixir.Application do
 
   @impl true
   def start(_type, _args) do
+    port = System.get_env("PORT", "8080") |> :erlang.binary_to_integer()
     children = [
-      {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: 8080},
+      {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: port},
       RinhaElixir.Store,
       %{
         id: RinhaElixir.ClientStore,
