@@ -1,13 +1,18 @@
 defmodule RinhaElixir.ClientStore do
   require Logger
 
+  alias :mnesia, as: Mnesia
+
   @amount_txns_to_keep 10
 
   @spec start_link(list({id :: integer(), limite :: integer()})) :: {:ok, pid()}
-  def start_link(items) do
-    {_, state_map} = items |> Enum.map_reduce(%{}, fn {id, limite}, acc -> { nil, Map.put(acc, id, %{limite: limite, saldo: 0, latest_transactions: []})} end)
+  def start_link(_items) do
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  end
 
-    GenServer.start_link(__MODULE__, state_map, name: __MODULE__)
+
+  def init(_) do
+    {:ok, :rinha_fuck}
   end
 
   def get_saldo(id) do
@@ -28,12 +33,6 @@ defmodule RinhaElixir.ClientStore do
 
   def append_transaction(id, transaction) do
     GenServer.cast(__MODULE__, { :append_transaction, id, transaction })
-  end
-
-  def init(state) do
-    Logger.info("#{inspect(state)}")
-
-    {:ok, state}
   end
 
   def handle_cast({:append_transaction, id, transaction}, state) do
@@ -66,7 +65,16 @@ defmodule RinhaElixir.ClientStore do
   end
 
   def handle_call({:get_data, id}, _from, state) do
-    {:reply, state[id], state}
+    # TODO: we might wanna have a regular read here, using trasaction
+    [{_, _, saldo, limite}] = Mnesia.dirty_read({BalanceAggregate, id})
+
+    Logger.info("Found this damn data :: #{inspect(%{ saldo: saldo, limite: limite })}")
+
+    {:reply, %{
+      saldo: saldo,
+      limite: limite,
+      latest_transactions: []
+    }, state}
   end
 
   def handle_call({:get_saldo, id}, _from, state) do

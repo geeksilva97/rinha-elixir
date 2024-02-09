@@ -13,7 +13,7 @@ defmodule RinhaElixir.Application do
 
     Logger.info("Starting cluster")
 
-    # TODO: Gotta add some retires here... just in case
+    # TODO: Gotta add some retries here... just in case
     cluster_result = start_cluster(node())
 
     Logger.info("Clustering result #{inspect(cluster_result)}")

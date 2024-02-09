@@ -25,6 +25,8 @@
 - Depois de um tempo descobri que era porque, devido à configuração do mix, o :mnesia já começava startado - deve ter um
     jeito de por na lista, mas sem iniciar.
 - Pra resolver garanti que o mnesia estava parado, fazendo um :rpc.multicall(cluster_nodes(), :mnesia, :stop, [])
+- Deixando esse link só pra caso eu precise setar o diretorio do Mnesia
+    -[https://stackoverflow.com/questions/40357730/how-to-start-an-iex-session-with-cookie-and-erl-options](https://stackoverflow.com/questions/40357730/how-to-start-an-iex-session-with-cookie-and-erl-options)
 
 https://www.erlang.org/doc/man/mnesia#write-1
 https://architecturenotes.co/redis/
