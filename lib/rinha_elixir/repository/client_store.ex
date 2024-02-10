@@ -62,7 +62,7 @@ defmodule RinhaElixir.ClientStore do
   end
 
   def handle_cast({:add_saldo, client_id, valor}, state) do
-    Logger.info("Adicionando saldo :: cliente [#{client_id}]")
+    # Logger.info("Adicionando saldo :: cliente [#{client_id}]")
 
     {:atomic, :ok} = Mnesia.transaction(fn ->
       {:ok, _novo_saldo, _limite} = BalanceAggregateMnesia.increment_saldo(client_id, valor)

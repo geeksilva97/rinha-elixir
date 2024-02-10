@@ -16,12 +16,10 @@ services:
       - NODE_NAME=diogenes
       - NODE_TYPE=master
       - BOOTSTRAP_NODES=alexander@api02
-    # depends_on:
-    #   - api02
     deploy:
       resources:
         limits:
-          cpus: '0.6'
+          cpus: '0.5'
           memory: '200MB'
 
   api02:
@@ -32,7 +30,6 @@ services:
       - "8081:8080"
     volumes:
       - ./:/app
-    # depends_on: []
     environment:
       - NODE_NAME=alexander
       - BOOTSTRAP_NODES=diogenes@api01
@@ -49,5 +46,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.3'
+          cpus: '0.5'
           memory: '100MB'
