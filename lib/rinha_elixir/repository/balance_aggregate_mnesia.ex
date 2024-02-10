@@ -3,6 +3,12 @@ defmodule RinhaElixir.Reporitory.BalanceAggregateMnesia do
 
   @table BalanceAggregate
 
+  def dirty_get(client_id) do
+    [{_, _, saldo, limite}] = Mnesia.dirty_read({@table, client_id})
+
+    {:ok, saldo, limite}
+  end
+
   def get(client_id) do
     [{_, _, saldo, limite}] = Mnesia.read({@table, client_id})
 

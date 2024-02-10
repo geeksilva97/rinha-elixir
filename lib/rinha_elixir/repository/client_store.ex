@@ -1,4 +1,6 @@
 defmodule RinhaElixir.ClientStore do
+  alias RinhaElixir.Reporitory.BalanceAggregateMnesia
+  alias RinhaElixir.Repository.LatestEventsMnesia
   require Logger
 
   alias :mnesia, as: Mnesia
@@ -30,33 +32,25 @@ defmodule RinhaElixir.ClientStore do
     GenServer.cast(__MODULE__, { :append_transaction, id, transaction })
   end
 
-  def handle_cast({:append_transaction, id, transaction}, state) do
-    Logger.info("appending transaction :: Cliente [#{id}] :: #{inspect(transaction)}")
+  def handle_cast({:append_transaction, client_id, transaction}, state) do
+    # Logger.info("Appending transaction :: Cliente [#{client_id}] :: #{inspect(transaction)}")
 
     {:atomic, :ok} = Mnesia.transaction(fn ->
-      latest_events = case Mnesia.read({LatestEvents, id}) do
-        [{_, _client_id, event_list}] -> event_list
-        _ -> []
+      latest_txns = LatestEventsMnesia.get(client_id)
+
+      new_list = case length(latest_txns) >= @amount_txns_to_keep do
+        true -> [transaction | latest_txns] |> List.delete_at(-1)
+        _ -> [transaction | latest_txns]
       end
 
-      Logger.info("latest events :: #{inspect(latest_events)}")
-
-      new_list = case length(latest_events) >= @amount_txns_to_keep do
-        true -> [transaction | latest_events] |> List.delete_at(-1)
-        _ -> [transaction | latest_events]
-      end
-
-      Logger.info("new list of events :: #{inspect(new_list)}")
-
-      :ok = Mnesia.write({LatestEvents, id, new_list})
+      LatestEventsMnesia.set(client_id, new_list)
     end)
 
     {:noreply, state}
   end
 
-
   def handle_cast({:subtract_saldo, id, valor}, state) do
-    Logger.info("Subtraindo saldo :: cliente [#{id}]")
+    # Logger.info("Subtraindo saldo :: cliente [#{id}]")
 
     {:atomic, :ok} = Mnesia.transaction(fn ->
       [{_table_name, _id, saldo, limite}] = Mnesia.read({BalanceAggregate, id})
@@ -67,13 +61,13 @@ defmodule RinhaElixir.ClientStore do
     {:noreply, state}
   end
 
-  def handle_cast({:add_saldo, id, valor}, state) do
-    Logger.info("Adicionando saldo :: cliente [#{id}]")
+  def handle_cast({:add_saldo, client_id, valor}, state) do
+    Logger.info("Adicionando saldo :: cliente [#{client_id}]")
 
     {:atomic, :ok} = Mnesia.transaction(fn ->
-      [{_table_name, _id, saldo, limite}] = Mnesia.read({BalanceAggregate, id})
+      {:ok, _novo_saldo, _limite} = BalanceAggregateMnesia.increment_saldo(client_id, valor)
 
-      :ok = Mnesia.write({BalanceAggregate, id, saldo + valor, limite})
+      :ok
     end)
 
     {:noreply, state}

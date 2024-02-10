@@ -1,32 +1,63 @@
 defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   alias RinhaElixir.Repository.LatestEventsMnesia
   alias RinhaElixir.Reporitory.BalanceAggregateMnesia
+  alias RinhaElixir.ClientStore
   alias :mnesia, as: Mnesia
 
   @amount_txns_to_keep 10
 
-
   def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
-    {:atomic, result} = Mnesia.transaction(fn ->
-      latest_txns = LatestEventsMnesia.get(client_id)
+    {:ok, saldo, limite} = BalanceAggregateMnesia.dirty_get(client_id)
 
-      transaction = payload_to_transaction(payload)
-      new_list = case length(latest_txns) >= @amount_txns_to_keep do
-        true -> [transaction | latest_txns] |> List.delete_at(-1)
-        _ -> [transaction | latest_txns]
-      end
+    novo_saldo = saldo + payload["valor"]
 
-        :ok = LatestEventsMnesia.set(client_id, new_list)
+    ClientStore.append_transaction(
+      client_id,
+      payload_to_transaction(payload)
+    )
 
-        # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
-        # sjustaro salso só depois
-        {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
+    ClientStore.add_saldo(
+      client_id,
+      payload["valor"]
+    )
 
-        %{ saldo: novo_saldo, limite: -1*limite }
-    end)
+    # transaction = payload_to_transaction(payload)
+    # new_list = case length(latest_txns) >= @amount_txns_to_keep do
+    #   true -> [transaction | latest_txns] |> List.delete_at(-1)
+    #   _ -> [transaction | latest_txns]
+    # end
+
+    # :ok = LatestEventsMnesia.set(client_id, new_list)
+
+    # {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
+
+    result = %{ saldo: novo_saldo, limite: -1*limite }
 
     {:ok, Jason.encode!(result)}
   end
+
+
+  # def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
+  #   {:atomic, result} = Mnesia.transaction(fn ->
+  #     latest_txns = LatestEventsMnesia.get(client_id)
+
+  #     transaction = payload_to_transaction(payload)
+  #     new_list = case length(latest_txns) >= @amount_txns_to_keep do
+  #       true -> [transaction | latest_txns] |> List.delete_at(-1)
+  #       _ -> [transaction | latest_txns]
+  #     end
+
+  #       :ok = LatestEventsMnesia.set(client_id, new_list)
+
+  #       # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
+  #       # sjustaro salso só depois
+  #       {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
+
+  #       %{ saldo: novo_saldo, limite: -1*limite }
+  #   end)
+
+  #   {:ok, Jason.encode!(result)}
+  # end
 
   def handle_transaction("d", %{ client_id: client_id, payload: payload }) do
     {:atomic, result} = Mnesia.transaction(fn ->
