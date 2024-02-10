@@ -7,8 +7,8 @@ defmodule RinhaElixir.HttpHandlers.Router do
   # https://hexdocs.pm/plug/1.3.6/Plug.Conn.html#read_body/2
 
   plug(:match)
-  plug(:dispatch)
   plug(:check_client_id)
+  plug(:dispatch)
 
   get "/clientes/:client_id/extrato" do
     # TODO: remove this info shit
@@ -76,10 +76,11 @@ defmodule RinhaElixir.HttpHandlers.Router do
   end
 
   defp check_client_id(conn, _) do
+    Logger.info("Checando a porra do client id\n\n\n")
     client_id = conn.params["client_id"] |> :erlang.binary_to_integer()
 
     unless client_id in 1..5 do
-      send_resp(conn, 404, [])
+      send_resp(conn, 404, []) |> halt()
     else
       conn
     end
