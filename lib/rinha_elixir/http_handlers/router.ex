@@ -16,12 +16,12 @@ defmodule RinhaElixir.HttpHandlers.Router do
 
   get "/clientes/:client_id/extrato" do
     client_id = client_id |> :erlang.binary_to_integer()
-    {:atomic, { saldo, limite, latest_transactions }} = Mnesia.sync_transaction(fn ->
-      {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
-      latest_events = LatestEventsMnesia.get(client_id)
+    # {:atomic, { saldo, limite, latest_transactions }} = Mnesia.sync_transaction(fn ->
+      {:ok, saldo, limite} = BalanceAggregateMnesia.dirty_get(client_id)
+      latest_events = LatestEventsMnesia.dirty_get(client_id)
 
-      {saldo, limite, latest_events}
-    end)
+      # {saldo, limite, latest_events}
+    # end)
 
     conn
     |> put_resp_header("Content-Type", "application/json")
@@ -33,7 +33,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
           data_extrato: DateTime.utc_now(),
           limite: -1*limite
         },
-        ultimas_transacoes: latest_transactions
+        ultimas_transacoes: latest_events
       })
     )
   end

@@ -11,6 +11,15 @@ defmodule RinhaElixir.Repository.LatestEventsMnesia do
     end
   end
 
+  def dirty_get(client_id) do
+    case Mnesia.dirty_read({LatestEvents, client_id}) do
+      [] ->
+        []
+      [{_, _client_id, latest_events}] -> 
+        latest_events
+    end
+  end
+
   @spec set(client_id :: integer(), transactions :: list()) :: term()
   def set(client_id, transactions) do
     Mnesia.write({LatestEvents, client_id, transactions})
