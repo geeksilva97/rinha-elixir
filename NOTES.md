@@ -28,5 +28,19 @@
 - Deixando esse link só pra caso eu precise setar o diretorio do Mnesia
     -[https://stackoverflow.com/questions/40357730/how-to-start-an-iex-session-with-cookie-and-erl-options](https://stackoverflow.com/questions/40357730/how-to-start-an-iex-session-with-cookie-and-erl-options)
 
+
+- Funcionou! o mnesia ta distribuido entre os nodes
+- Os endpoints foram reescritos para usar o mnesia
+-   - ainda preciso centralizar, tem muito codigo do tipo Mnesia.write por aí. Isso pode ficar uma abstracao como
+      BalanceAggregatMnesia.add_saldo(id)
+- agora pretendo fazer uns testes iniciais com as restricoes dadas. 
+-
+- Antes de enviar tenho de lembrar de:
+    - remover os logs
+    - remover o observer das deps
+    - Gerar imagem como release
+- Ainda, imagino que tenho de ajustar os volumes do docker... tirar aquele binding
+- Será que vale a pena usar unix sockets no nginx?... vamo ver
+
 https://www.erlang.org/doc/man/mnesia#write-1
 https://architecturenotes.co/redis/
