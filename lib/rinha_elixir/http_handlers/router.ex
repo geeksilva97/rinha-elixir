@@ -5,6 +5,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
   require Logger
   alias RinhaElixir.Reporitory.BalanceAggregateMnesia
   alias RinhaElixir.HttpHandlers.TransactionsHttpHandler
+  alias RinhaElixir.Repository.LatestEventsMnesia
 
   alias :mnesia, as: Mnesia
 
@@ -18,7 +19,12 @@ defmodule RinhaElixir.HttpHandlers.Router do
 
   get "/clientes/:client_id/extrato" do
     client_id = client_id |> :erlang.binary_to_integer()
-    %{ limite: limite, saldo: saldo, latest_transactions: latest_transactions } = ClientStore.get_data(client_id)
+    {:atomic, { saldo, limite, latest_transactions }} = Mnesia.sync_transaction(fn ->
+      {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
+      latest_events = LatestEventsMnesia.get(client_id)
+
+      {saldo, limite, latest_events}
+    end)
 
     conn
     |> put_resp_header("Content-Type", "application/json")
@@ -41,26 +47,36 @@ defmodule RinhaElixir.HttpHandlers.Router do
     payload = Jason.decode!(raw_body)
     client_id = client_id |> :erlang.binary_to_integer()
     tipo = payload[ "tipo"]
-    valor = payload["valor"]
+    valor = payload["valor"] || 0
+    descricao = payload["descricao"] || ""
+    size_descricao = String.length(descricao)
 
-    result = TransactionsHttpHandler.handle_transaction(tipo, %{ client_id: client_id, payload: payload })
+    unless is_float(valor) or valor <= 0 or size_descricao == 0 or size_descricao > 10 do
+      result = TransactionsHttpHandler.handle_transaction(tipo, %{ client_id: client_id, payload: payload })
 
-    case result do
-      {:ok, content} ->
-        conn
-        |> put_resp_header("Content-Type", "application/json")
-        |> send_resp(200, content)
+      case result do
+        {:ok, content} ->
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(200, content)
 
-      {:unprocessable, content} ->
-        conn
-        |> put_resp_header("Content-Type", "application/json")
-        |> send_resp(422, content)
+        {:unprocessable, content} ->
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(422, content)
 
-      _ ->
-        conn
-        |> put_resp_header("Content-Type", "application/json")
-        |> send_resp(422, [])
+        _ ->
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(422, [])
+      end
+
+      else
+          conn
+          |> put_resp_header("Content-Type", "application/json")
+          |> send_resp(422, [])
     end
+
   end
 
   defp check_client_id(conn, _) do
