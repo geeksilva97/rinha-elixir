@@ -33,6 +33,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
 
   post "/clientes/:client_id/transacoes" do
     {:ok, raw_body, _} = read_body(conn)
+
     payload = Jason.decode!(raw_body)
     client_id = client_id |> :erlang.binary_to_integer()
     tipo = payload[ "tipo"]

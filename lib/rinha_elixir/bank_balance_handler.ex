@@ -16,7 +16,7 @@ defmodule RinhaElixir.BankBalanceHandler do
     transaction = Map.delete(event_data, "client_id") |> Map.put("realizada_em", DateTime.utc_now())
 
     Store.store_event(client_id, Map.delete(event_data, "client_id"))
-    ClientStore.append_transaction(client_id, transaction)
+    # ClientStore.append_transaction(client_id, transaction)
 
     {:ok, state}
   end
