@@ -37,16 +37,23 @@ defmodule RinhaElixir.ClientStore do
   def handle_cast({:append_transaction, id, transaction}, state) do
     Logger.info("appending transaction :: Cliente [#{id}] :: #{inspect(transaction)}")
 
-    # {:atomic, :ok} = Mnesia.transaction(fn ->
-    #   [{_, _client_id, latest_events}] = Mnesia.read({LatestEvents, id})
+    {:atomic, :ok} = Mnesia.transaction(fn ->
+      latest_events = case Mnesia.read({LatestEvents, id}) do
+        [{_, _client_id, event_list}] -> event_list
+        _ -> []
+      end
 
-    #   new_list = case length(latest_events) >= @amount_txns_to_keep do
-    #     true -> [transaction | latest_events] |> List.delete_at(-1)
-    #     _ -> [transaction | latest_events]
-    #   end
+      Logger.info("latest events :: #{inspect(latest_events)}")
 
-    #   Mnesia.write({LatestEvents, id, new_list})
-    # end)
+      new_list = case length(latest_events) >= @amount_txns_to_keep do
+        true -> [transaction | latest_events] |> List.delete_at(-1)
+        _ -> [transaction | latest_events]
+      end
+
+      Logger.info("new list of events :: #{inspect(new_list)}")
+
+      :ok = Mnesia.write({LatestEvents, id, new_list})
+    end)
 
     {:noreply, state}
   end
