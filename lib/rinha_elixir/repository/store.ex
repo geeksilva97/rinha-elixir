@@ -18,11 +18,9 @@ defmodule RinhaElixir.Store do
   end
 
   defp write_log(client_id, event_data) do
-    # Mnesia.dirty_write({EventLog, client_id, make_ref(), 1, event_data})
-
-    {:atomic, :ok} = Mnesia.transaction(fn ->
+    # {:atomic, :ok} = Mnesia.transaction(fn ->
       Mnesia.write({EventLog, client_id, make_ref(), 1, event_data})
-    end)
+    # end)
   end
 
   defp cluster_nodes() do
@@ -49,10 +47,8 @@ defmodule RinhaElixir.Store do
 
     {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag, disc_copies: cluster_nodes()])
 
-    # aggregate {client: 1, saldo: 1000, limite: 222}
     {:atomic, :ok} = Mnesia.create_table(BalanceAggregate, [attributes: [:client_id, :saldo, :limite], type: :set, ram_copies: cluster_nodes()])
 
-    # latest events { client: 1, latest_events: [%{...}, %{...}] }
     {:atomic, :ok} = Mnesia.create_table(LatestEvents, [attributes: [:client_id, :latest_events], type: :set, ram_copies: cluster_nodes()])
   end
 
