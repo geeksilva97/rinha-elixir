@@ -1,7 +1,7 @@
 # Use este script para executar testes locais
 
-RESULTS_WORKSPACE="/tmp/test-results"
-GATLING_BIN_DIR=/Users/edysilva/Downloads/gatling-charts-highcharts-bundle-3.10.3/bin
+RESULTS_WORKSPACE="$(pwd)/load-test/user-files/results"
+GATLING_BIN_DIR=/Users/edysilva/Downloads/gatling-charts-highcharts-bundle-3.10.3
 GATLING_WORKSPACE="$(pwd)/load-test/user-files"
 
 runGatling() {
