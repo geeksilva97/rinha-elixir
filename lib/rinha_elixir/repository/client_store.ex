@@ -14,10 +14,6 @@ defmodule RinhaElixir.ClientStore do
     {:ok, :rinha_fuck}
   end
 
-  def get_saldo(id) do
-    GenServer.call(__MODULE__, { :get_saldo, id })
-  end
-
   def get_data(id) do
     GenServer.call(__MODULE__, { :get_data, id })
   end
@@ -105,10 +101,6 @@ defmodule RinhaElixir.ClientStore do
     Logger.info("Found this damn data :: #{inspect(query_result)}")
 
     {:reply, query_result, state}
-  end
-
-  def handle_call({:get_saldo, id}, _from, state) do
-    {:reply, :tava_esperando_saldo_aqui, state}
   end
 
   def handle_call(_event, _from, state) do

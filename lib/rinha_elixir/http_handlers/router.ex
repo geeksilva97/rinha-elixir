@@ -1,15 +1,12 @@
 defmodule RinhaElixir.HttpHandlers.Router do
   use Plug.Router
   alias RinhaElixir.Bus
-  alias RinhaElixir.ClientStore
-  require Logger
   alias RinhaElixir.Reporitory.BalanceAggregateMnesia
   alias RinhaElixir.HttpHandlers.TransactionsHttpHandler
   alias RinhaElixir.Repository.LatestEventsMnesia
+  require Logger
 
   alias :mnesia, as: Mnesia
-
-  @amount_txns_to_keep 10
 
   # https://hexdocs.pm/plug/1.3.6/Plug.Conn.html#read_body/2
 
