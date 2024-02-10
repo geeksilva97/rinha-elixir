@@ -18,9 +18,7 @@ defmodule RinhaElixir.Store do
   end
 
   defp write_log(client_id, event_data) do
-    # {:atomic, :ok} = Mnesia.transaction(fn ->
-      Mnesia.write({EventLog, client_id, make_ref(), 1, event_data})
-    # end)
+    Mnesia.write({EventLog, client_id, make_ref(), 1, event_data})
   end
 
   defp cluster_nodes() do
@@ -43,7 +41,7 @@ defmodule RinhaElixir.Store do
     :rpc.multicall(cluster_nodes(), :mnesia, :start, [])
     Logger.info("Creating tables... #{inspect(cluster_nodes())}")
 
-    Mnesia.info()
+    # Mnesia.info()
 
     {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag, disc_copies: cluster_nodes()])
 
@@ -60,6 +58,8 @@ defmodule RinhaElixir.Store do
     create_mnesia_schema(node())
     create_mnesia_tables(node())
     initialize_data(node())
+
+    Logger.info("store started successfully")
 
     {:ok, %{}}
   end

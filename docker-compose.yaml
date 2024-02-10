@@ -1,5 +1,5 @@
 version: "3"
-
+# Ref https://github.com/oliveigah/rinha_backend/blob/master/docker-compose.yml
 services:
   api01: &api
     build:
@@ -14,8 +14,9 @@ services:
       - ./:/app
     environment:
       - NODE_NAME=diogenes
-    depends_on:
-      - api02
+      - BOOTSTRAP_NODES=alexander@api02
+    # depends_on:
+    #   - api02
     deploy:
       resources:
         limits:
@@ -24,19 +25,16 @@ services:
 
   api02:
     <<: *api
-    # build:
-    #   context: .
-    #   args:
-    #     - NODE_NAME=alexander
     container_name: api02
     hostname: api02
     ports:
       - "8081:8080"
     volumes:
       - ./:/app
-    depends_on: []
+    # depends_on: []
     environment:
       - NODE_NAME=alexander
+      - BOOTSTRAP_NODES=diogenes@api01
 
   nginx:
     image: nginx:latest

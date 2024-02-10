@@ -7,7 +7,7 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
 
 
   def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
-    {:atomic, result} = Mnesia.sync_transaction(fn ->
+    {:atomic, result} = Mnesia.transaction(fn ->
       latest_txns = LatestEventsMnesia.get(client_id)
 
       transaction = payload_to_transaction(payload)
@@ -27,7 +27,7 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   end
 
   def handle_transaction("d", %{ client_id: client_id, payload: payload }) do
-    {:atomic, result} = Mnesia.sync_transaction(fn ->
+    {:atomic, result} = Mnesia.transaction(fn ->
       {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
 
       case (saldo - payload["valor"]) < limite do
