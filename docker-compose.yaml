@@ -14,6 +14,7 @@ services:
       - ./:/app
     environment:
       - NODE_NAME=diogenes
+      - NODE_TYPE=master
       - BOOTSTRAP_NODES=alexander@api02
     # depends_on:
     #   - api02

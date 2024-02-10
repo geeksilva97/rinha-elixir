@@ -18,6 +18,8 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
 
         :ok = LatestEventsMnesia.set(client_id, new_list)
 
+        # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
+        # sjustaro salso só depois
         {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
 
         %{ saldo: novo_saldo, limite: -1*limite }

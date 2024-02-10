@@ -39,9 +39,6 @@ defmodule RinhaElixir.Store do
 
   def create_mnesia_tables(:diogenes@api01) do
     :rpc.multicall(cluster_nodes(), :mnesia, :start, [])
-    Logger.info("Creating tables... #{inspect(cluster_nodes())}")
-
-    # Mnesia.info()
 
     {:atomic, :ok} = Mnesia.create_table(EventLog, [attributes: [:client_id, :event_id, :version, :event_data], type: :bag, disc_copies: cluster_nodes()])
 
