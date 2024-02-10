@@ -11,8 +11,6 @@ defmodule RinhaElixir.HttpHandlers.Router do
   plug(:dispatch)
 
   get "/clientes/:client_id/extrato" do
-    # TODO: remove this info shit
-    :mnesia.info()
     client_id = client_id |> :erlang.binary_to_integer()
     %{ limite: limite, saldo: saldo, latest_transactions: latest_transactions } = ClientStore.get_data(client_id)
 
@@ -24,7 +22,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
         saldo: %{
           total: saldo,
           data_extrato: DateTime.utc_now(),
-          limite: limite
+          limite: -1*limite
         },
         ultimas_transacoes: latest_transactions
       })
@@ -64,7 +62,7 @@ defmodule RinhaElixir.HttpHandlers.Router do
 
           conn
           |> put_resp_header("Content-Type", "application/json")
-          |> send_resp(200, Jason.encode!(%{limite: limite, saldo: saldo_atual - valor }))
+          |> send_resp(200, Jason.encode!(%{limite: -1*limite, saldo: saldo_atual - valor }))
         end
 
       _ ->
@@ -76,7 +74,6 @@ defmodule RinhaElixir.HttpHandlers.Router do
   end
 
   defp check_client_id(conn, _) do
-    Logger.info("Checando a porra do client id\n\n\n")
     client_id = conn.params["client_id"] |> :erlang.binary_to_integer()
 
     unless client_id in 1..5 do

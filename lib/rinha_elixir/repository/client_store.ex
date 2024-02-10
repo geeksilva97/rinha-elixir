@@ -84,24 +84,27 @@ defmodule RinhaElixir.ClientStore do
   end
 
   def handle_call({:get_data, id}, _from, state) do
-    # TODO: we might wanna have a regular read here, using trasaction
-    [{_, _, saldo, limite}] = Mnesia.dirty_read({BalanceAggregate, id})
+    {:atomic, query_result} = Mnesia.transaction(fn ->
+      [{_, _, saldo, limite}] = Mnesia.read({BalanceAggregate, id})
 
-    latest_txns = case Mnesia.dirty_read({LatestEvents, id}) do
-      [] ->
-        Logger.error("nao encontrei carai de evento aqui --  move saporra pra um modulo separado")
-        []
-      [{_, _client_id, latest_events}] -> 
-        latest_events
-    end
+      latest_txns = case Mnesia.read({LatestEvents, id}) do
+        [] ->
+          Logger.error("nao encontrei carai de evento aqui --  move saporra pra um modulo separado")
+          []
+        [{_, _client_id, latest_events}] -> 
+          latest_events
+      end
 
-    Logger.info("Found this damn data :: #{inspect(%{ saldo: saldo, limite: limite })}")
+        %{
+          saldo: saldo,
+          limite: limite,
+          latest_transactions: latest_txns
+        }
+    end)
 
-    {:reply, %{
-      saldo: saldo,
-      limite: limite,
-      latest_transactions: latest_txns
-    }, state}
+    Logger.info("Found this damn data :: #{inspect(query_result)}")
+
+    {:reply, query_result, state}
   end
 
   def handle_call({:get_saldo, id}, _from, state) do

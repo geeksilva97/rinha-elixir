@@ -10,8 +10,8 @@ services:
     hostname: api01
     ports:
       - "8080:8080"
-    # volumes:
-    #   - ./:/app
+    volumes:
+      - ./:/app
     environment:
       - NODE_NAME=diogenes
     depends_on:
@@ -20,7 +20,7 @@ services:
       resources:
         limits:
           cpus: '0.6'
-          memory: '225MB'
+          memory: '200MB'
 
   api02:
     <<: *api
@@ -32,8 +32,8 @@ services:
     hostname: api02
     ports:
       - "8081:8080"
-    # volumes:
-    #   - ./:/app
+    volumes:
+      - ./:/app
     depends_on: []
     environment:
       - NODE_NAME=alexander
@@ -51,4 +51,4 @@ services:
       resources:
         limits:
           cpus: '0.3'
-          memory: '50MB'
+          memory: '100MB'
