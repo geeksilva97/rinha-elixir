@@ -9,18 +9,22 @@ defmodule RinhaElixir.Application do
 
   @impl true
   def start(_type, _args) do
-
     System.get_env("BOOTSTRAP_NODES", "")
     |> String.split()
     |> start_cluster()
 
     port = System.get_env("PORT", "8080") |> :erlang.binary_to_integer()
 
+    # nao sei pq tem que ter esse carai aqui -- nao lembro porque adicionei e nao to com paciencia pra entender porque
+    # nao consigo tirar
     Process.sleep(1000)
 
     children = [
       {Plug.Cowboy, scheme: :http, plug: RinhaElixir.HttpHandlers.Router, port: port},
-      RinhaElixir.Store,
+      %{
+        id: RinhaElixir.Store,
+        start: {RinhaElixir.Store, :start_link, []}
+      },
       %{
         id: RinhaElixir.ClientStore,
         start: {RinhaElixir.ClientStore, :start_link, [

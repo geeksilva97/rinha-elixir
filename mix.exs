@@ -14,7 +14,7 @@ defmodule RinhaElixir.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :mnesia, :runtime_tools, :observer, :wx],
+      extra_applications: [:logger, :mnesia],
       mod: {RinhaElixir.Application, []}
     ]
   end
