@@ -28,9 +28,7 @@ defmodule RinhaElixir.Store do
     create_mnesia_tables()
     initialize_data()
 
-    Logger.info("store started successfully")
-
-    Mnesia.info()
+    Logger.info("Store successfully started at #{node()}")
 
     {:ok, %{ node: node() }}
   end
@@ -47,12 +45,6 @@ defmodule RinhaElixir.Store do
     write_log(client_id, payload)
 
     {:reply, :ok, state}
-  end
-
-  def handle_call(_event, _from, state) do
-    Logger.info("received an unexpected event")
-
-    {:reply, :wtf, state}
   end
 
   defp write_log(client_id, event_data) do
@@ -86,15 +78,20 @@ defmodule RinhaElixir.Store do
   end
 
   defp initialize_data() do
-    [
+    {:atomic, [:ok, :ok, :ok, :ok, :ok]} = Mnesia.transaction(fn ->
+      [
             # client data {id, limite}
-      {1, -100000},
-      {2, -80000},
-      {3, -1000000},
-      {4, -10000000},
-      {5, -500000},
-    ] |> Enum.map(fn {client_id, limite} ->
-      Mnesia.dirty_write({BalanceAggregate, client_id, 0, limite})
-    end) |> IO.inspect() 
+        {1, -100000},
+        {2, -80000},
+        {3, -1000000},
+        {4, -10000000},
+        {5, -500000},
+      ] |> Enum.map(fn {client_id, limite} ->
+        :ok = Mnesia.dirty_write({Client, client_id, 0, limite})
+        :ok = Mnesia.dirty_write({BalanceAggregate, client_id, 0, limite})
+      end)
+    end)
+
+    Logger.info("Data successfully initialized")
   end
 end
