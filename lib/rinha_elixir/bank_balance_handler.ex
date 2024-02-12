@@ -2,7 +2,9 @@ defmodule RinhaElixir.BankBalanceHandler do
   @behaviour :gen_event
 
   alias RinhaElixir.{Store, ClientStore}
+  alias RinhaElixir.Repository.EventLogMnesia
   alias :mnesia, as: Mnesia
+  require Logger
 
   def init([]) do
     {:ok, []}
@@ -13,14 +15,17 @@ defmodule RinhaElixir.BankBalanceHandler do
   end
 
   def handle_event({:log_event, event_data}, state) do
+    # Logger.info("handling event logging")
+
     client_id = event_data["client_id"]
     transaction = Map.delete(event_data, "client_id") |> Map.put("realizada_em", DateTime.utc_now())
 
-    {:atomic, _} = Mnesia.transaction(fn ->
-      Store.store_event(client_id, Map.delete(event_data, "client_id"))
-    end)
+    :ok = EventLogMnesia.save(%{
+      client_id: client_id,
+      data: transaction
+    })
 
-    ClientStore.append_transaction(client_id, transaction)
+    # Logger.info("Event successfully registered")
 
     {:ok, state}
   end
