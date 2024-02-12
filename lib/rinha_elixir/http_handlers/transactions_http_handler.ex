@@ -1,12 +1,18 @@
 defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   alias RinhaElixir.Repository.LatestEventsMnesia
   alias RinhaElixir.Reporitory.BalanceAggregateMnesia
+  alias RinhaElixir.Repository.EventLogMnesia
   alias :mnesia, as: Mnesia
 
   @amount_txns_to_keep 10
 
 
   def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
+    EventLogMnesia.save(%{
+      client_id: client_id,
+      data: payload
+    })
+
     {:atomic, result} = Mnesia.transaction(fn ->
       latest_txns = LatestEventsMnesia.get(client_id)
 
@@ -19,7 +25,7 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
         :ok = LatestEventsMnesia.set(client_id, new_list)
 
         # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
-        # sjustaro salso só depois
+        # ajustar saldo só depois
         {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
 
         %{ saldo: novo_saldo, limite: -1*limite }
@@ -29,6 +35,11 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   end
 
   def handle_transaction("d", %{ client_id: client_id, payload: payload }) do
+    EventLogMnesia.save(%{
+      client_id: client_id,
+      data: payload
+    })
+
     {:atomic, result} = Mnesia.transaction(fn ->
       {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
 
