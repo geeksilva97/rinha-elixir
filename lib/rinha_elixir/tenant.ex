@@ -21,14 +21,14 @@ defmodule RinhaElixir.Tenant do
     event_table = String.to_atom("event_log#{client_id}")
     balance_table = String.to_atom("balance#{client_id}")
 
-    Mnesia.start()
+    # Mnesia.start()
 
-    {:atomic, :ok} = Mnesia.create_table(balance_table, [attributes: [:client_id, :saldo, :limite], type: :set, ram_copies: cluster_nodes()])
-    {:atomic, :ok} = Mnesia.create_table(event_table, [attributes: [:client_id, :latest_events], type: :set, ram_copies: cluster_nodes()])
+    # {:atomic, :ok} = Mnesia.create_table(balance_table, [attributes: [:client_id, :saldo, :limite], type: :set, ram_copies: cluster_nodes()])
+    # {:atomic, :ok} = Mnesia.create_table(event_table, [attributes: [:client_id, :latest_events], type: :set, ram_copies: cluster_nodes()])
 
-    :ok = Mnesia.dirty_write({balance_table, client_id, 0, limit})
+    # :ok = Mnesia.dirty_write({balance_table, client_id, 0, limit})
 
-    {:ok, %{events_table: event_table, balance_table: balance_table}}
+    {:ok, %{events: [], balance: 0, limit: limit}}
   end
 
   def credit(client_id, payload) do
@@ -45,48 +45,40 @@ defmodule RinhaElixir.Tenant do
 
   def tenant_name(client_id), do: String.to_atom("tenant#{client_id}")
 
-  def handle_call({:summary, client_id}, _from, state = %{events_table: events_table, balance_table: balance_table}) do
-    [{_, _, balance, limit}] = Mnesia.dirty_read({balance_table, client_id})
-
-    latest_txns = latest_events(events_table, client_id)
-
+  def handle_call({:summary, client_id}, _from, state = %{events: latest_txns, balance: balance, limit: limit}) do
     {:reply, {:ok, balance, limit, latest_txns}, state}
   end
 
-  def handle_call({:credit, client_id, payload}, _from, state = %{events_table: events_table, balance_table: balance_table}) do
+  def handle_call({:credit, client_id, payload}, _from, state = %{events: latest_txns, balance: balance, limit: limit}) do
     transaction = payload_to_transaction(payload)
 
-    # {:atomic, result} = Mnesia.transaction(fn ->
-      latest_txns = latest_events(events_table, client_id)
+      # latest_txns = latest_events(events_table, client_id)
 
       new_list = case length(latest_txns) >= @amount_txns_to_keep do
         true -> [transaction | latest_txns] |> List.delete_at(-1)
         _ -> [transaction | latest_txns]
       end
 
-        :ok = Mnesia.dirty_write({events_table, client_id, new_list})
+        # :ok = Mnesia.dirty_write({events_table, client_id, new_list})
 
-        [{_, _, balance, limit}] = Mnesia.dirty_read({balance_table, client_id})
+        # [{_, _, balance, limit}] = Mnesia.dirty_read({balance_table, client_id})
 
         new_balance = balance + transaction["valor"]
 
-        Mnesia.dirty_write({balance_table, client_id, new_balance, limit})
+        # Mnesia.dirty_write({balance_table, client_id, new_balance, limit})
 
-        # {:ok, new_balance, limit}
-    # end)
-
-    {:reply, {:ok, new_balance, limit}, state}
+    {:reply, {:ok, new_balance, limit}, %{ state | events: new_list, balance: new_balance }}
   end
 
-  def handle_call({:debit, client_id, payload}, _from, state = %{events_table: events_table, balance_table: balance_table}) do
-    [{_, _, balance, limit}] = Mnesia.dirty_read({balance_table, client_id})
+  def handle_call({:debit, client_id, payload}, _from, state = %{events: latest_txns, balance: balance, limit: limit}) do
+    # [{_, _, balance, limit}] = Mnesia.dirty_read({balance_table, client_id})
     new_balance = balance - payload["valor"]
 
       case new_balance < limit do
         true ->
           {:reply, {:unprocessable, balance, limit}, state}
         _ -> 
-          latest_txns = latest_events(events_table, client_id)
+          # latest_txns = latest_events(events_table, client_id)
 
           transaction = payload_to_transaction(payload)
           new_list = case length(latest_txns) >= @amount_txns_to_keep do
@@ -94,13 +86,11 @@ defmodule RinhaElixir.Tenant do
             _ -> [transaction | latest_txns]
           end
 
-          :ok = Mnesia.dirty_write({events_table, client_id, new_list})
+          # :ok = Mnesia.dirty_write({events_table, client_id, new_list})
 
-          # [{_, _, balance, limit}] = Mnesia.wread({balance_table, client_id})
+          # Mnesia.dirty_write({balance_table, client_id, new_balance, limit})
 
-          Mnesia.dirty_write({balance_table, client_id, new_balance, limit})
-
-          {:reply, {:ok, new_balance, limit}, state}
+          {:reply, {:ok, new_balance, limit}, %{ state | events: new_list, balance: new_balance }}
       end
   end
 
