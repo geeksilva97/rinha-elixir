@@ -54,11 +54,10 @@ defmodule RinhaElixir.Application do
   end
 
   defp start_cluster(node_list) do
-    Logger.info("No bootstrap nodes present")
     start_cluster(node_list, max_attempts: 10, interval_ms: 1000)
   end
 
-  defp start_cluster(node_list, [max_attempts: 0]) do
+  defp start_cluster(node_list, [max_attempts: 0, interval_ms: _]) do
     :erlang.exit(:error, {:network_issue, "Could not connect to nodes #{inspect(node_list)}"})
   end
 
@@ -74,19 +73,4 @@ defmodule RinhaElixir.Application do
     end
 
   end
-
-
-  # def start_cluster(:diogenes@api01) do
-  #   case Node.list() do
-  #     [] -> Node.connect(:alexander@api02)
-  #     _ -> {:ok, :already_connected}
-  #   end
-  # end
-
-  # def start_cluster(:alexander@api02) do
-  #   case Node.list() do
-  #     [] -> Node.connect(:diogenes@api01)
-  #     _ -> {:ok, :already_connected}
-  #   end
-  # end
 end
