@@ -6,14 +6,7 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
 
   @amount_txns_to_keep 10
 
-
   def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
-    Bus.send_event({ :log_event, Map.put(payload, "client_id", client_id)})
-    # EventLogMnesia.save(%{
-    #   client_id: client_id,
-    #   data: payload
-    # })
-
     {:atomic, result} = Mnesia.transaction(fn ->
       latest_txns = LatestEventsMnesia.get(client_id)
 
@@ -36,12 +29,6 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   end
 
   def handle_transaction("d", %{ client_id: client_id, payload: payload }) do
-    Bus.send_event({ :log_event, Map.put(payload, "client_id", client_id)})
-    # EventLogMnesia.save(%{
-    #   client_id: client_id,
-    #   data: payload
-    # })
-
     {:atomic, result} = Mnesia.transaction(fn ->
       {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
 

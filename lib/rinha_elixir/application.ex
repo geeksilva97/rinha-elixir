@@ -38,6 +38,7 @@ defmodule RinhaElixir.Application do
           ]
         ]}
       },
+      RinhaElixir.TenancySupervisor,
       %{
         id: RinhaElixir.Bus,
         start: {RinhaElixir.Bus, :start_link, [[{BankBalanceHandler, []}]]}
@@ -71,6 +72,5 @@ defmodule RinhaElixir.Application do
       Process.sleep(interval_ms)
       start_cluster(node_list, Keyword.put(options, :max_attempts, max_attempts - 1))
     end
-
   end
 end
