@@ -6,10 +6,16 @@ defmodule RinhaElixir.TenancySupervisor do
   end
 
   def init(_) do
-    children = [1, 2, 3, 4, 5] |> Enum.map(fn client_id -> 
+    children = [
+      {1, -100000},
+      {2, -80000},
+      {3, -1000000},
+      {4, -10000000},
+      {5, -500000}
+    ] |> Enum.map(fn {client_id, limit} -> 
       %{
         id: RinhaElixir.Tenant.tenant_name(client_id),
-        start: {RinhaElixir.Tenant, :start_link, [client_id]}
+        start: {RinhaElixir.Tenant, :start_link, [{client_id, limit}]}
       }
     end)
 

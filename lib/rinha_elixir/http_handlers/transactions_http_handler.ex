@@ -7,56 +7,63 @@ defmodule RinhaElixir.HttpHandlers.TransactionsHttpHandler do
   @amount_txns_to_keep 10
 
   def handle_transaction("c", %{ client_id: client_id, payload: payload }) do
-    {:atomic, result} = Mnesia.transaction(fn ->
-      latest_txns = LatestEventsMnesia.get(client_id)
+    # {:atomic, result} = Mnesia.transaction(fn ->
+    #   latest_txns = LatestEventsMnesia.get(client_id)
 
-      transaction = payload_to_transaction(payload)
-      new_list = case length(latest_txns) >= @amount_txns_to_keep do
-        true -> [transaction | latest_txns] |> List.delete_at(-1)
-        _ -> [transaction | latest_txns]
-      end
+    #   transaction = payload_to_transaction(payload)
+    #   new_list = case length(latest_txns) >= @amount_txns_to_keep do
+    #     true -> [transaction | latest_txns] |> List.delete_at(-1)
+    #     _ -> [transaction | latest_txns]
+    #   end
 
-        :ok = LatestEventsMnesia.set(client_id, new_list)
+    #     :ok = LatestEventsMnesia.set(client_id, new_list)
 
-        # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
-        # ajustar saldo só depois
-        {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
+    #     # TODO: talvez possamos voltar pra abordagem de event sourcing. Para transacoes de credito, nao há problema
+    #     # ajustar saldo só depois
+    #     {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, payload["valor"])
 
-        %{ saldo: novo_saldo, limite: -1*limite }
-    end)
+    #     %{ saldo: novo_saldo, limite: -1*limite }
+    # end)
 
-    {:ok, Jason.encode!(result)}
+    {:ok, new_balance, limit} = RinhaElixir.Tenant.credit(client_id, payload)
+
+    {:ok, Jason.encode!(%{saldo: new_balance, limite: -1*limit})}
   end
 
   def handle_transaction("d", %{ client_id: client_id, payload: payload }) do
-    {:atomic, result} = Mnesia.transaction(fn ->
-      {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
+    # {:atomic, result} = Mnesia.transaction(fn ->
+    #   {:ok, saldo, limite} = BalanceAggregateMnesia.get_with_write_lock(client_id)
 
-      case (saldo - payload["valor"]) < limite do
-        true ->
-          {:unprocessable, []}
-        _ -> 
-          latest_txns = LatestEventsMnesia.get(client_id)
+    #   case (saldo - payload["valor"]) < limite do
+    #     true ->
+    #       {:unprocessable, []}
+    #     _ -> 
+    #       latest_txns = LatestEventsMnesia.get(client_id)
 
-          transaction = payload_to_transaction(payload)
-          new_list = case length(latest_txns) >= @amount_txns_to_keep do
-            true -> [transaction | latest_txns] |> List.delete_at(-1)
-            _ -> [transaction | latest_txns]
-          end
+    #       transaction = payload_to_transaction(payload)
+    #       new_list = case length(latest_txns) >= @amount_txns_to_keep do
+    #         true -> [transaction | latest_txns] |> List.delete_at(-1)
+    #         _ -> [transaction | latest_txns]
+    #       end
 
-          :ok = LatestEventsMnesia.set(client_id, new_list)
+    #       :ok = LatestEventsMnesia.set(client_id, new_list)
 
-          # TODO: maybe we can do a single set operation here since there a lock in the beggining of the function
-          {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, -1*payload["valor"])
+    #       # TODO: maybe we can do a single set operation here since there a lock in the beggining of the function
+    #       {:ok, novo_saldo, limite} = BalanceAggregateMnesia.increment_saldo(client_id, -1*payload["valor"])
 
-          {:ok, Jason.encode!(%{
-            saldo: novo_saldo,
-            limite: -1*limite
-          })}
-      end
-    end)
+    #       {:ok, Jason.encode!(%{
+    #         saldo: novo_saldo,
+    #         limite: -1*limite
+    #       })}
+    #   end
+    # end)
 
-    result
+    case RinhaElixir.Tenant.debit(client_id, payload) do
+      {:ok, new_balance, limit} -> 
+        {:ok, Jason.encode!(%{saldo: new_balance, limite: -1*limit})}
+      _ ->
+        {:unprocessable, []}
+    end
   end
 
   def handle_transaction(_, _) do
